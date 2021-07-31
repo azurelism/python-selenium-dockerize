@@ -6,6 +6,7 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.utils import ChromeType
 from selenium import webdriver
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from tests.testrail_plugins import TestRailPlugin
 
 driver = None
 
