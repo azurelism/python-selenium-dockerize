@@ -13,7 +13,7 @@ def pytest_addoption(parser):
     """ Add custom parameters to cmd line"""
     parser.addoption("--browser", action="store", default="chrome",
                      help="Type in browser name e.g. chrome:  ")
-	parser.addoption('--ids', action='store', metavar='id1,id2,id3...',
+    parser.addoption('--ids', action='store', metavar='id1,id2,id3...',
                      help='only run tests with the specified IDs')
     parser.addoption('--publish', action='store_true', default=False,
                      help='If set, create a new test run and publish results')
