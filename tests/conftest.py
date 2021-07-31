@@ -6,6 +6,8 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.utils import ChromeType
 from selenium import webdriver
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from selenium.webdriver.firefox.options import Options as FOptions
+
 from tests.testrail_plugins import TestRailPlugin
 
 driver = None
@@ -61,7 +63,9 @@ def init_driver(request):
         elif browser == "chromium":
             driver = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
         elif browser == "firefox":
-            driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
+            firefox_options = FOptions()
+            firefox_options.add_argument("--headless")
+            driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=firefox_options)
         elif browser == "edge":
             driver = webdriver.Edge(EdgeChromiumDriverManager().install())
         else:
