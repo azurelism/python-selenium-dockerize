@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: circleci/python:jessie-node-browsers
+      - image: circleci/python:3.8.11-browsers
         auth:
           username: azurecin
           password: $DOCKERHUB_PASSWORD
@@ -10,15 +10,6 @@ jobs:
     steps:
       - checkout
       - run: mkdir reports
-      - run:
-          name: Install Chromedriver latest version
-          command: |
-            sudo apt-get update
-            sudo apt-get install lsb-release libappindicator3-1
-            curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-            sudo dpkg -i google-chrome.deb
-            sudo sed -i 's|HERE/chrome"|HERE/chrome" --no-sandbox|g' /opt/google/chrome/google-chrome
-            rm google-chrome.deb
       - run:
           name: Install Dependencies
           command: |
