@@ -1,7 +1,11 @@
 import configparser
-
+import os
+import sys
+dir_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+init_file = os.path.join(os.path.join(dir_folder, 'config'), 'config.ini')
+print(init_file)
 config = configparser.RawConfigParser()
-config.read(".\\config\\config.ini")
+config.read(init_file)
 
 
 class ReadConfig:
