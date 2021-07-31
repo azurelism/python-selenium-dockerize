@@ -23,7 +23,7 @@ jobs:
           name: Run Tests
           command: |
             . venv/bin/activate
-            python3 -m pytest --html=./reports/report.html tests/ --capture=tee-sys --publish
+            python3 -m pytest --html=./reports/report.html tests/ --browser firefox --capture=tee-sys --publish
       - store_artifacts:
           path: reports
           destination: reports
