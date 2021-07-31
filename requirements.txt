@@ -1,6 +1,4 @@
-selenium 
 pytest 
 pytest-html
 webdriver-manager
-openpyxl
 pytest-dependency
