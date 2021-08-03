@@ -7,7 +7,7 @@ jobs:
     steps:
       - checkout
       - run: mkdir reports
-      - run: mkdir screenshots
+      - run: mkdir reports/screenshots
       - run:
           name: Install Dependencies
           command: |

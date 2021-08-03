@@ -95,7 +95,7 @@ class TestRailPlugin():
                     timestamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
                     feature_request = item.funcargs['request']
                     driver = feature_request.getfixturevalue('init_driver')
-                    screenshot = "screenshots" + os.sep + str(tid) + '_' + timestamp + '.png'
+                    screenshot = "reports" + os.sep + "screenshots" + os.sep + "testrail" + str(tid) + '_' + timestamp + '.png'
                     driver.get_screenshot_as_file(screenshot)
                     screenshot_url = os.path.dirname(os.path.dirname(__file__)) + os.sep + screenshot
                     comments = f"This result was marked by automation. Failure screenshot url: {screenshot_url}"
