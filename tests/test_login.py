@@ -27,4 +27,4 @@ class Test_Login(BaseTest):
         self.hp.do_logout()
 
         act_title = self.driver.title
-        assert act_title == "Your store. Login"
+        assert act_title == "Login"
