@@ -102,8 +102,8 @@ jobs:
       - run:
           name: Restart service
           command: |
-             service strongswan restart
              sudo service xl2tpd restart
+             ipsec up officevpn
       - run:
           name: Start VPN
           command: |
