@@ -22,7 +22,7 @@ jobs:
           name: Install tools
           command: |
             sudo apt-get update
-            sudo apt-get install -y xl2tpd strongswan net-tools
+            sudo apt-get install -y strongswan xl2tpd
       - run:
           name: Configure ipsec
           command: |
@@ -43,7 +43,7 @@ jobs:
               authby=secret
               ike=aes128-sha1-modp1024,3des-sha1-modp1024!
               esp=aes128-sha1-modp1024,3des-sha1-modp1024!
-            conn officevpn
+            conn meraki
               keyexchange=ikev1
               left=%defaultroute
               auto=add
@@ -102,28 +102,29 @@ jobs:
       - run:
           name: Restart service
           command: |
-             sudo service xl2tpd restart
-             ipsec up officevpn
+            sudo service strongswan restart
+            sudo service xl2tpd restart
+            sudo ipsec auto --up meraki
       - run:
           name: Start VPN
           command: |
-              sudo echo "c officevpn <user> <pass>" > /var/run/xl2tpd/l2tp-control
+            sudo echo "c meraki <user> <pass>" > /var/run/xl2tpd/l2tp-control
       - run:
           name: Configure routing
           command: |
-              default_gw_IP=$(ip route | grep default | awk '{ print $3 }')
-                    echo "Default gateway of the VM is ${default_gw_IP}"
-                    sudo route add "${VPN_SERVER_IP}" gw "${default_gw_IP}"
-                    echo "Added VPN server IP to VM's default gateway ${default_gw_IP}"
+            default_gw_IP=$(ip route | grep default | awk '{ print $3 }')
+                  echo "Default gateway of the VM is ${default_gw_IP}"
+                  sudo route add "${VPN_SERVER_IP}" gw "${default_gw_IP}"
+                  echo "Added VPN server IP to VM's default gateway ${default_gw_IP}"
 
-                    # add Circle IP to default gateway to get updates on Circle web console
-                    circle_ip=$(last -a | grep -i 'still logged in' | awk '{print $10}')
-                    sudo route add "${circle_ip}" gw "${default_gw_IP}"
-                    echo "Added Circle IP ${circle_ip} to VM's default gateway ${default_gw_IP}"
+                  # add Circle IP to default gateway to get updates on Circle web console
+                  circle_ip=$(last -a | grep -i 'still logged in' | awk '{print $10}')
+                  sudo route add "${circle_ip}" gw "${default_gw_IP}"
+                  echo "Added Circle IP ${circle_ip} to VM's default gateway ${default_gw_IP}"
 
-                    # route traffic through VPN
-                    sudo route add default dev ppp0
-                    echo "Route traffic through VPN"
+                  # route traffic through VPN
+                  sudo route add default dev ppp0
+                  echo "Route traffic through VPN"
       - run:
           name: Run Tests
           command: |
