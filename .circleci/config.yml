@@ -137,51 +137,10 @@ jobs:
           command: |
              sudo service strongswan restart
              sudo service xl2tpd restart
-
-             # wait config to be loaded
-             count=0
-             while [ ${count} -lt 5 ]; do
-              sudo ipsec up officevpn
-              if [ $? -eq 1 ]; then
-                echo "officevpn config not loaded $count retry"
-                if [ ${count} -eq 4 ]; then
-                  echo "ERROR: Failed to load officevpn config"
-                  exit 1
-                else
-                  (( count++ ))
-                  sleep 1
-                fi
-             else
-                echo "officevpn config is loaded"
-                break
-             fi
-             done
       - run:
           name: Start VPN
           command: |
-              set +e
-              sudo bash -c 'echo "c officevpn" > /var/run/xl2tpd/l2tp-control'
-
-              # wait for interface to be created
-              count=0
-              while [ ${count} -lt 5 ]; do
-                ifconfig ppp0 | grep -q ppp0
-                if [ $? -eq 1 ]; then
-                  echo "VPN not yet created. Retry count $count"
-                  if [ ${count} -eq 4 ]; then
-                    echo "ERROR: Failed to create interface ppp0"
-                    exit 1
-                  else
-                    (( count++ ))
-                    sleep 1
-                  fi
-                else
-                  echo "Interface ppp0 is created"
-                  sudo ifconfig ppp0 up
-                    break
-                fi
-                done
-
+              sudo echo "c officevpn <user> <pass>" > /var/run/xl2tpd/l2tp-control
       - run:
           name: Configure routing
           command: |
