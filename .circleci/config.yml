@@ -102,9 +102,8 @@ jobs:
       - run:
           name: Restart service
           command: |
-            sudo service strongswan restart
+            service ipsec restart
             sudo service xl2tpd restart
-            sudo ipsec auto --up meraki
       - run:
           name: Start VPN
           command: |
