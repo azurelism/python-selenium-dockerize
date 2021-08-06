@@ -97,7 +97,7 @@ jobs:
             sudo mv /tmp/xl2tpd.conf /etc/xl2tpd/xl2tpd.conf
             sudo mv /tmp/options.l2tpd.client /etc/ppp/options.l2tpd.client
             chmod 600 /etc/ppp/options.l2tpd.client
-            mkdir -p /var/run/xl2tpd
+            sudo mkdir -p /var/run/xl2tpd
             sudo touch /var/run/xl2tpd/l2tp-control
       - run:
           name: Configure xl2tpd
