@@ -112,18 +112,18 @@ jobs:
           name: Configure routing
           command: |
             default_gw_IP=$(ip route | grep default | awk '{ print $3 }')
-                  echo "Default gateway of the VM is ${default_gw_IP}"
-                  sudo route add "${VPN_SERVER_IP}" gw "${default_gw_IP}"
-                  echo "Added VPN server IP to VM's default gateway ${default_gw_IP}"
+            echo "Default gateway of the VM is ${default_gw_IP}"
+            sudo route add "${VPN_SERVER_IP}" gw "${default_gw_IP}"
+            echo "Added VPN server IP to VM's default gateway ${default_gw_IP}"
 
-                  # add Circle IP to default gateway to get updates on Circle web console
-                  circle_ip=$(last -a | grep -i 'still logged in' | awk '{print $10}')
-                  sudo route add "${circle_ip}" gw "${default_gw_IP}"
-                  echo "Added Circle IP ${circle_ip} to VM's default gateway ${default_gw_IP}"
+            # add Circle IP to default gateway to get updates on Circle web console
+            circle_ip=$(last -a | grep -i 'still logged in' | awk '{print $10}')
+            sudo route add "${circle_ip}" gw "${default_gw_IP}"
+            echo "Added Circle IP ${circle_ip} to VM's default gateway ${default_gw_IP}"
 
-                  # route traffic through VPN
-                  sudo route add default dev ppp0
-                  echo "Route traffic through VPN"
+            # route traffic through VPN
+            sudo route add default dev ppp0
+            echo "Route traffic through VPN"
       - run:
           name: Run Tests
           command: |
