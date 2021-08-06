@@ -102,12 +102,12 @@ jobs:
       - run:
           name: Restart service
           command: |
-            service ipsec restart
+            sudo service ipsec restart
             sudo service xl2tpd restart
       - run:
           name: Start VPN
           command: |
-            sudo echo "c meraki <user> <pass>" > /var/run/xl2tpd/l2tp-control
+            sudo bash -c 'echo "c meraki" > /var/run/xl2tpd/l2tp-control'
       - run:
           name: Configure routing
           command: |
