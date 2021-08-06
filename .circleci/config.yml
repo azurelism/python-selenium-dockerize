@@ -6,8 +6,12 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - run: mkdir reports
-      - run: mkdir screenshots
+      - run:
+          name: Create Report dir
+          command: mkdir reports
+      - run:
+          name: Create Screenshots dir
+          command: mkdir screenshots
       - run:
           name: Install Dependencies
           command: |
