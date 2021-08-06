@@ -19,43 +19,65 @@ jobs:
             . venv/bin/activate
             pip install -r requirements.txt
       - run:
-          name: Install VNP packages
+          name: Install tools
           command: |
-            apt-get update
-            apt-get install strongswan xl2tpd net-tools
+            sudo apt-get update
+            sudo apt-get install -y xl2tpd strongswan  net-tools
       - run:
-          name: Configure strongSwan
+          name: Configure ipsec
           command: |
-            cat > /etc/ipsec.conf <<EOF
-
-            conn myvpn
-              auto=add
+            cat \<<EOF >/tmp/ipsec.conf
+            # ipsec.conf - strongSwan IPsec configuration file
+            # basic configuration
+            config setup
+              # strictcrlpolicy=yes
+              # uniqueids = no
+            # Add connections here.
+            # Sample VPN connections
+            conn %default
+              ikelifetime=60m
+              keylife=20m
+              rekeymargin=3m
+              keyingtries=1
               keyexchange=ikev1
               authby=secret
-              type=transport
+              ike=aes128-sha1-modp1024,3des-sha1-modp1024!
+              esp=aes128-sha1-modp1024,3des-sha1-modp1024!
+            conn officevpn
+              keyexchange=ikev1
               left=%defaultroute
+              auto=add
+              authby=secret
+              type=transport
               leftprotoport=17/1701
               rightprotoport=17/1701
               right=$VPN_SERVER_IP
-              ike=aes128-sha1-modp2048
-              esp=aes128-sha1
             EOF
 
-            cat > /etc/ipsec.secrets <<EOF
+            sudo mv /tmp/ipsec.conf /etc/ipsec.conf
+
+      - run:
+          name: Configure PSK
+          command: |
+            VPN_IPSEC_PSK=$(echo "$VPN_IPSEC_PSK_BASE64ENCODE" | base64 -d)
+            cat \<<EOF >/tmp/ipsec.secrets
             : PSK "$VPN_IPSEC_PSK"
             EOF
+
+            sudo mv /tmp/ipsec.secrets /etc/ipsec.secrets
+            chmod 600 /etc/ipsec.secrets
       - run:
           name: Configure xl2tpd
           command: |
-            cat > /etc/xl2tpd/xl2tpd.conf <<EOF
-            [lac myvpn]
+            cat \<<EOF >/tmp/xl2tpd.conf
+            [lac officevpn]
             lns = $VPN_SERVER_IP
             ppp debug = yes
             pppoptfile = /etc/ppp/options.l2tpd.client
             length bit = yes
             EOF
 
-            cat > /etc/ppp/options.l2tpd.client <<EOF
+            cat \<<EOF >/tmp/options.l2tpd.client
             ipcp-accept-local
             ipcp-accept-remote
             refuse-eap
@@ -68,47 +90,114 @@ jobs:
             defaultroute
             usepeerdns
             connect-delay 5000
-            name "$VPN_USER"
-            password "$VPN_PASSWORD"
+            name $VPN_USER
+            password $VPN_PASSWORD
             EOF
 
+            sudo mv /tmp/xl2tpd.conf /etc/xl2tpd/xl2tpd.conf
+            sudo mv /tmp/options.l2tpd.client /etc/ppp/options.l2tpd.client
             chmod 600 /etc/ppp/options.l2tpd.client
-      - run:
-          name: Create xl2tpd control file
-          command: |
             mkdir -p /var/run/xl2tpd
-            touch /var/run/xl2tpd/l2tp-control
+            sudo touch /var/run/xl2tpd/l2tp-control
       - run:
-          name: Restart services
+          name: Configure xl2tpd
           command: |
-            service strongswan restart
-            service xl2tpd restart
-      - run:
-          name: Start the IPsec connection
-          command: |
-            ipsec up myvpn
-      - run:
-          name: Start the L2TP connection
-          command: |
-            echo "c myvpn" > /var/run/xl2tpd/l2tp-control
-      - run:
-          name: Check existing default route
-          command: |
-            ip route
-            default_gw_IP=$(ip route | grep default | awk '{ print $3 }')
-      - run:
-          name: Exclude VPN server's IP from the new default route
-          command: |
-            route add YOUR_VPN_SERVER_IP gw $default_gw_IP
-      - run:
-          name: Add a new default route
-          command: |
-            route add default dev ppp0
-      - run:
-          name: Verify that your traffic
-          command: |
-            wget -qO- http://ipv4.icanhazip.com; echo
+            cat \<<EOF >/tmp/xl2tpd.conf
+            [lac officevpn]
+            lns = $VPN_SERVER_IP
+            ppp debug = yes
+            pppoptfile = /etc/ppp/options.l2tpd.client
+            length bit = yes
+            EOF
 
+            cat \<<EOF >/tmp/options.l2tpd.client
+            ipcp-accept-local
+            ipcp-accept-remote
+            refuse-eap
+            require-chap
+            noccp
+            noauth
+            mtu 1280
+            mru 1280
+            noipdefault
+            defaultroute
+            usepeerdns
+            connect-delay 5000
+            name $VPN_USER
+            password $VPN_PASSWORD
+            EOF
+
+            sudo mv /tmp/xl2tpd.conf /etc/xl2tpd/xl2tpd.conf
+            sudo mv /tmp/options.l2tpd.client /etc/ppp/options.l2tpd.client
+            chmod 600 /etc/ppp/options.l2tpd.client
+
+            sudo touch /var/run/xl2tpd/l2tp-control
+      - run:
+          name: Restart service
+          command: |
+             sudo service strongswan restart
+             sudo service xl2tpd restart
+
+             # wait config to be loaded
+             count=0
+             while [ ${count} -lt 5 ]; do
+              sudo ipsec up officevpn
+              if [ $? -eq 1 ]; then
+                echo "officevpn config not loaded $count retry"
+                if [ ${count} -eq 4 ]; then
+                  echo "ERROR: Failed to load officevpn config"
+                  exit 1
+                else
+                  (( count++ ))
+                  sleep 1
+                fi
+             else
+                echo "officevpn config is loaded"
+                break
+             fi
+             done
+      - run:
+          name: Start VPN
+          command: |
+              set +e
+              sudo bash -c 'echo "c officevpn" > /var/run/xl2tpd/l2tp-control'
+
+              # wait for interface to be created
+              count=0
+              while [ ${count} -lt 5 ]; do
+                ifconfig ppp0 | grep -q ppp0
+                if [ $? -eq 1 ]; then
+                  echo "VPN not yet created. Retry count $count"
+                  if [ ${count} -eq 4 ]; then
+                    echo "ERROR: Failed to create interface ppp0"
+                    exit 1
+                  else
+                    (( count++ ))
+                    sleep 1
+                  fi
+                else
+                  echo "Interface ppp0 is created"
+                  sudo ifconfig ppp0 up
+                    break
+                fi
+                done
+
+      - run:
+          name: Configure routing
+          command: |
+              default_gw_IP=$(ip route | grep default | awk '{ print $3 }')
+                    echo "Default gateway of the VM is ${default_gw_IP}"
+                    sudo route add "${VPN_SERVER_IP}" gw "${default_gw_IP}"
+                    echo "Added VPN server IP to VM's default gateway ${default_gw_IP}"
+
+                    # add Circle IP to default gateway to get updates on Circle web console
+                    circle_ip=$(last -a | grep -i 'still logged in' | awk '{print $10}')
+                    sudo route add "${circle_ip}" gw "${default_gw_IP}"
+                    echo "Added Circle IP ${circle_ip} to VM's default gateway ${default_gw_IP}"
+
+                    # route traffic through VPN
+                    sudo route add default dev ppp0
+                    echo "Route traffic through VPN"
       - run:
           name: Run Tests
           command: |
