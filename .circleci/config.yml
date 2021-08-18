@@ -23,6 +23,9 @@ jobs:
           command: |
             . venv/bin/activate
             python3 -m pytest --html=./reports/report.html --capture=tee-sys
+      - store_artifacts:
+          path: screenshots
+          destination: screenshots
       - run:
           name: Package up screenshots
           command: |
@@ -32,9 +35,6 @@ jobs:
       - store_artifacts:
           path: ~/screenshots.zip
           destination: screenshots.zip
-      - store_artifacts:
-          path: screenshots
-          destination: screenshots
       - store_artifacts:
           path: reports
           destination: reports
