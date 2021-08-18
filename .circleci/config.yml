@@ -1,17 +1,14 @@
 version: 2.1
 jobs:
-  build:
+  build and test:
     docker:
       - image: circleci/python:3.8.11-browsers
     working_directory: ~/repo
     steps:
       - checkout
       - run:
-          name: Create Report dir
-          command: mkdir reports
-      - run:
-          name: Create Screenshots dir
-          command: mkdir screenshots
+          name: Create dir
+          command: mkdir reports screenshots
       - run:
           name: Install Dependencies
           command: |
@@ -19,100 +16,19 @@ jobs:
             . venv/bin/activate
             pip install -r requirements.txt
       - run:
-          name: Install tools
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y strongswan xl2tpd
-      - run:
-          name: Configure ipsec
-          command: |
-            cat \<<EOF >/tmp/ipsec.conf
-            # ipsec.conf - strongSwan IPsec configuration file
-            # basic configuration
-            config setup
-              # strictcrlpolicy=yes
-              # uniqueids = no
-            # Add connections here.
-            # Sample VPN connections
-            conn %default
-              ikelifetime=60m
-              keylife=20m
-              rekeymargin=3m
-              keyingtries=1
-              keyexchange=ikev1
-              authby=secret
-              ike=aes128-sha1-modp1024,3des-sha1-modp1024!
-              esp=aes128-sha1-modp1024,3des-sha1-modp1024!
-            conn meraki
-              keyexchange=ikev1
-              left=%defaultroute
-              auto=add
-              authby=secret
-              type=transport
-              leftprotoport=17/1701
-              rightprotoport=17/1701
-              right=$VPN_SERVER_IP
-            EOF
-
-            sudo mv /tmp/ipsec.conf /etc/ipsec.conf
-            chmod 600 /etc/ipsec.conf
-      - run:
-          name: Configure PSK
-          command: |
-            VPN_IPSEC_PSK=$(echo "$VPN_IPSEC_PSK_BASE64ENCODE" | base64 -d)
-            cat \<<EOF >/tmp/ipsec.secrets
-            : PSK "$VPN_IPSEC_PSK"
-            EOF
-
-            sudo mv /tmp/ipsec.secrets /etc/ipsec.secrets
-            chmod 600 /etc/ipsec.secrets
-      - run:
-          name: Configure xl2tpd
-          command: |
-            cat \<<EOF >/tmp/xl2tpd.conf
-            [lac officevpn]
-            lns = $VPN_SERVER_IP
-            ppp debug = yes
-            pppoptfile = /etc/ppp/options.l2tpd.client
-            length bit = yes
-            EOF
-
-            cat \<<EOF >/tmp/options.l2tpd.client
-            ipcp-accept-local
-            ipcp-accept-remote
-            refuse-eap
-            require-chap
-            noccp
-            noauth
-            mtu 1280
-            mru 1280
-            noipdefault
-            defaultroute
-            usepeerdns
-            connect-delay 5000
-            name $VPN_USER
-            password $VPN_PASSWORD
-            EOF
-
-            sudo mv /tmp/xl2tpd.conf /etc/xl2tpd/xl2tpd.conf
-            sudo mv /tmp/options.l2tpd.client /etc/ppp/options.l2tpd.client
-            chmod 600 /etc/ppp/options.l2tpd.client
-            sudo mkdir -p /var/run/xl2tpd
-            sudo touch /var/run/xl2tpd/l2tp-control
-      - run:
-          name: Restart service
-          command: |
-            sudo service ipsec restart
-            sudo service xl2tpd restart
-      - run:
-          name: Start VPN
-          command: |
-            sudo bash -c 'echo "c meraki" > /var/run/xl2tpd/l2tp-control'
-      - run:
           name: Run Tests
           command: |
             . venv/bin/activate
-            python3 -m pytest --html=./reports/report.html tests/ --capture=tee-sys --publish
+            python3 -m pytest --html=./reports/report.html tests/ --capture=tee-sys
+      - run:
+          name: Package up screenshots
+          command: |
+            pushd screenshots
+            zip -r ~/screenshots.zip *
+            popd
+      - store_artifacts:
+          path: ~/screenshots.zip
+          destination: screenshots.zip
       - store_artifacts:
           path: screenshots
           destination: screenshots
