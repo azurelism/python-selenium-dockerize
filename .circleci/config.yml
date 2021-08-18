@@ -1,14 +1,17 @@
 version: 2.1
 jobs:
-  test:
+  build:
     docker:
       - image: circleci/python:3.8.11-browsers
     working_directory: ~/repo
     steps:
       - checkout
       - run:
-          name: Create dir
-          command: mkdir reports screenshots
+          name: Create dir reports
+          command: mkdir reports
+      - run:
+          name: Create dir screenshots
+          command: mkdir screenshots
       - run:
           name: Install Dependencies
           command: |
