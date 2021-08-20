@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  build:
+  test:
     docker:
       - image: circleci/python:3.8.11-browsers
     working_directory: ~/repo
@@ -26,15 +26,20 @@ jobs:
       - store_artifacts:
           path: screenshots
           destination: screenshots
-      - run:
-          name: Package up screenshots
-          command: |
-            pushd screenshots
-            zip -r ~/screenshots.zip *
-            popd
-      - store_artifacts:
-          path: ~/screenshots.zip
-          destination: screenshots.zip
       - store_artifacts:
           path: reports
           destination: reports
+workflows:
+    do_not_build:
+      when:
+        and:
+          - not:
+              equal: [ develop, << pipeline.git.branch >> ]
+      jobs:
+          - test
+    build:
+        when:
+          and:
+            - equal: [ develop, << pipeline.git.branch >> ]
+        jobs:
+            - test
