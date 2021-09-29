@@ -1,59 +1,17 @@
 # -*- coding: utf-8 -*-
-import pytest
-import time
 import os
-
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
-from webdriver_manager.utils import ChromeType
+import time
+import pytest
 from selenium import webdriver
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
-from selenium.webdriver.firefox.options import Options as FOptions
-
-from tests.testrail_plugins import TestRailPlugin
 
 driver = None
+
 
 def pytest_addoption(parser):
     """ Add custom parameters to cmd line"""
     parser.addoption("--browser", action="store", default="chrome",
                      help="Type in browser name e.g. chrome:  ")
-    parser.addoption('--ids', action='store', metavar='id1,id2,id3...',
-                     help='only run tests with the specified IDs')
-    parser.addoption('--publish', action='store_true', default=False,
-                     help='If set, create a new test run and publish results')
-    parser.addoption('--include_all', action='store_true', default=False,
-                     help='Used with --publish. If set, the test run will\
-                     contain all test cases.')
-    parser.addoption('--tr_name', action='store', metavar='<run name>',
-                     help='Used with --publish to configure run name.')
-    parser.addoption('--tr_id', action='store', metavar='run_id',
-                     help='If set, run tests in the test run and publish')
-					 
-def pytest_configure(config):
-    """ Configure marker"""
-    config.addinivalue_line('markers',
-                            'testrail(id): mark test with the case id')
-    if config.getoption('--publish') or config.getoption('--tr_id'):
-        config.pluginmanager.register(
-            TestRailPlugin(
-                config.getoption('--tr_id'),
-                config.getoption('--include_all'),
-                config.getoption('--tr_name')))
-				
-def pytest_runtest_setup(item):
-    """ This handle test case skipping when plugin is not available"""
-    ids = item.config.getoption('--ids')
-    if not ids:
-        return
-    ids = set([int(x) for x in ids.split(',')])
-    idmarker = item.get_closest_marker('testrail')
-    if idmarker is None:
-        pytest.skip('skip')
-    else:
-        tid = idmarker.args[0]
-        if tid not in ids:
-            pytest.skip('skip')
+
 
 @pytest.fixture(scope="class")
 def init_driver(request):
@@ -61,25 +19,22 @@ def init_driver(request):
     global driver
     if driver is None:
         if browser == "chrome":
-            driver = webdriver.Chrome(ChromeDriverManager().install())
-        elif browser == "chromium":
-            driver = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
-        elif browser == "firefox":
-            firefox_options = FOptions()
-            firefox_options.add_argument("--headless")
-            driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=firefox_options)
-        elif browser == "edge":
-            driver = webdriver.Edge(EdgeChromiumDriverManager().install())
+            caps = {'browserName': 'chrome'}
+            driver = webdriver.Remote(
+                command_executor='http://chrome:4444/wd/hub',
+                desired_capabilities=caps)
         else:
-            driver = webdriver.Chrome(ChromeDriverManager().install())
-        driver.implicitly_wait(3)
+            caps = {'browserName': 'chrome'}
+            driver = webdriver.Remote(
+                command_executor='http://chrome:4444/wd/hub',
+                desired_capabilities=caps)
+        driver.implicitly_wait(5)
         driver.maximize_window()
         request.cls.driver = driver
         yield driver
         driver.close()
         driver.quit()
         driver = None
-
 
 @pytest.mark.hookwrapper
 def pytest_runtest_makereport(item):

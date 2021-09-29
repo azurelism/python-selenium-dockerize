@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  chrome:
+    image: selenium/standalone-chrome
+    container_name: chrome
+    ports:
+      - "4444:4444"
+    restart: always
+
+  pytest:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: azurecin/automation-test:0.1
+    container_name: pytest
+    volumes:
+      - ./reports:/automation-test/reports/
+      - ./screenshots:/automation-test/screenshots/
+    tty: true
+    depends_on:
+      - chrome
