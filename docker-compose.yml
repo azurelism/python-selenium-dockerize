@@ -1,17 +1,28 @@
 version: '3'
 
 services:
-  chrome:
-    image: selenium/standalone-chrome
-    container_name: chrome
+  hub:
+    image: selenium/hub:3.141.59
     ports:
       - "4444:4444"
-    restart: always
+
+  chrome:
+    image: selenium/node-chrome:3.141.59
+    depends_on:
+      - hub
+    environment:
+      - HUB_HOST=hub
+
+  firefox:
+    image: selenium/node-firefox:3.141.59
+    depends_on:
+      - hub
+    environment:
+      - HUB_HOST=hub
 
   pytest:
     build:
       context: ./
-      dockerfile: Dockerfile
     image: azurecin/automation-test:0.1
     container_name: pytest
     volumes:
@@ -20,3 +31,4 @@ services:
     tty: true
     depends_on:
       - chrome
+      - firefox

@@ -3,7 +3,9 @@ import os
 import time
 import pytest
 from selenium import webdriver
-
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 driver = None
 
 
@@ -19,15 +21,23 @@ def init_driver(request):
     global driver
     if driver is None:
         if browser == "chrome":
-            caps = {'browserName': 'chrome'}
-            driver = webdriver.Remote(
-                command_executor='http://chrome:4444/wd/hub',
-                desired_capabilities=caps)
+            driver = webdriver.Chrome(ChromeDriverManager().install())
+            # caps = {'browserName': 'chrome'}
+            # driver = webdriver.Remote(
+            #     command_executor='http://hub:4444/wd/hub',
+            #     desired_capabilities=caps)
+        elif browser == "firefox":
+            driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
+            # caps = {'browserName': 'firefox'}
+            # driver = webdriver.Remote(
+            #     command_executor='http://hub:4444/wd/hub',
+            #     desired_capabilities=caps)
         else:
-            caps = {'browserName': 'chrome'}
-            driver = webdriver.Remote(
-                command_executor='http://chrome:4444/wd/hub',
-                desired_capabilities=caps)
+            driver = webdriver.Chrome(ChromeDriverManager().install())
+            # caps = {'browserName': 'chrome'}
+            # driver = webdriver.Remote(
+            #     command_executor='http://hub:4444/wd/hub',
+            #     desired_capabilities=caps)
         driver.implicitly_wait(5)
         driver.maximize_window()
         request.cls.driver = driver
@@ -35,6 +45,7 @@ def init_driver(request):
         driver.close()
         driver.quit()
         driver = None
+
 
 @pytest.mark.hookwrapper
 def pytest_runtest_makereport(item):

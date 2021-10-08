@@ -10,6 +10,7 @@ RUN mkdir /automation-test
 WORKDIR /automation-test
 
 COPY . .
+RUN mkdir reports screenshots
 
 RUN pip install -r requirements.txt
 
