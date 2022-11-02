@@ -3,10 +3,10 @@ from pages.basePage import BasePage
 
 
 class HomePage(BasePage):
-    link_logout = (By.LINK_TEXT, "Logout")
+    login_successfully_label = (By.ID, "lblLoggedinSuccessfully")
 
     def __init__(self, driver):
         super().__init__(driver)
 
-    def do_logout(self):
-        self.do_click(10, self.link_logout)
+
+

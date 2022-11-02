@@ -19,3 +19,7 @@ class BasePage:
     def do_send_file(self, time, by_locator, file):
         element = WebDriverWait(self.driver, time).until(EC.presence_of_element_located(by_locator))
         element.send_keys(file)
+
+    def is_invisible(self, time, by_locator):
+        element = WebDriverWait(self.driver, time).until(EC.invisibility_of_element_located(by_locator))
+        return bool(element)

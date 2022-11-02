@@ -1,8 +1,6 @@
-FROM python:3.8-alpine
+FROM python:3.8
 
 LABEL maintainer="azure <azure@cinnamon.is>"
-
-ENV PYTHONUNBUFFERED 1
 
 RUN pip install --upgrade pip
 

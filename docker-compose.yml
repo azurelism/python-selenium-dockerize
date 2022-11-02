@@ -5,6 +5,7 @@ services:
     image: selenium/hub:3.141.59
     ports:
       - "4444:4444"
+    restart: always
 
   chrome:
     image: selenium/node-chrome:3.141.59
@@ -12,6 +13,7 @@ services:
       - hub
     environment:
       - HUB_HOST=hub
+    restart: always
 
   firefox:
     image: selenium/node-firefox:3.141.59
@@ -19,6 +21,7 @@ services:
       - hub
     environment:
       - HUB_HOST=hub
+    restart: always
 
   pytest:
     build:
